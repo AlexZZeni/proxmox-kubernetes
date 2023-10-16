@@ -83,7 +83,7 @@ LXC [containers](https://pve.proxmox.com/wiki/Linux_Container) are used to creat
 pveam update
 
 # Download the ubuntu container template
-pveam download local ubuntu-20.04-standard_20.04-1_amd64.tar.gz
+pveam download local ubuntu-22.04-standard_22.04-1_amd64.tar.gz
 ```
 
 ## Cloud-init Template
@@ -92,13 +92,13 @@ Virtual machines provisioned are initialized using [Cloud-init](https://pve.prox
 
 ```bash
 # Download the ubuntu cloud image
-wget http://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
+wget https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 
 # Create a new VM with ID 9000
 qm create 9000 --memory 2048 --net0 virtio,bridge=vmbr0
 
 # Import the downloaded disk to local storage with qcow2 format
-qm importdisk 9000 focal-server-cloudimg-amd64.img local --format qcow2
+qm importdisk 9000 jammy-server-cloudimg-amd64.img local --format qcow2
 
 # Attach the new disk to the VM as scsi drive
 qm set 9000 --scsihw virtio-scsi-pci --scsi0 local:9000/vm-9000-disk-0.qcow2
