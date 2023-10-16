@@ -83,7 +83,7 @@ LXC [containers](https://pve.proxmox.com/wiki/Linux_Container) are used to creat
 pveam update
 
 # Download the ubuntu container template
-pveam download local ubuntu-22.04-standard_22.04-1_amd64.tar.gz
+pveam download local ubuntu-22.04-standard_22.04-1_amd64.tar.zst
 ```
 
 ## Cloud-init Template
