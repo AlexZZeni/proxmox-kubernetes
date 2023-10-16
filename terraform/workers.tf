@@ -1,48 +1,54 @@
 resource "proxmox_vm_qemu" "kube-worker" {
   for_each = var.workers
 
-  name        = each.key
-  target_node = var.common.target_node
-  agent       = 1
-  clone       = var.common.clone
-  vmid        = each.value.id
-  memory      = each.value.memory
-  cores       = each.value.cores
-  vga {
-    type = "qxl"
-  }
-  network {
-    id       = 0
-    model    = "virtio"
-    macaddr  = each.value.macaddr
-    bridge   = "vmbr0"
-    firewall = true
-  }
-  disk {
-    id           = 0
-    type         = "scsi"
-    storage      = "local"
-    storage_type = "dir"
-    size         = each.value.disk
-    format       = "qcow2"
-  }
-  serial {
-    id   = 0
-    type = "socket"
-  }
-  bootdisk   = "scsi0"
-  scsihw     = "virtio-scsi-pci"
-  os_type    = "cloud-init"
-  ipconfig0  = "ip=${each.value.cidr},gw=${each.value.gw}"
-  ciuser     = "terraform"
-  cipassword = yamldecode(data.local_file.secrets.content).user_password # comment after creation
-  # cipassword   = "**********" # un-comment after creation
+  name         = each.key
+  target_node  = each.value.target_node
+  agent        = 1
+  vmid         = each.value.id
+  memory       = each.value.memory
+  cores        = each.value.cores
+  onboot       = true
+  bootdisk     = "scsi0"
+  scsihw       = "virtio-scsi-pci"
+  os_type      = "cloud-init"
+  ipconfig0    = "ip=${each.value.cidr},gw=${each.value.gw}"
+  ciuser       = "terraform"
+  cipassword   = yamldecode(data.local_file.secrets.content).user_password
   searchdomain = var.common.search_domain
   nameserver   = var.common.nameserver
+  clone = var.common.clone
   sshkeys = join("", [
     data.tls_public_key.dy2k.public_key_openssh,
     data.tls_public_key.ubuntu_terraform.public_key_openssh
   ])
+
+  vga {
+    type = "qxl"
+  }
+
+  network {
+    model    = "virtio"
+    macaddr  = each.value.macaddr
+    bridge   = "vmbr0"
+    firewall = true
+    tag      = each.value.tag
+  }
+
+  disk {
+    type    = "scsi"
+    storage = each.value.storage
+    size    = each.value.disk
+    format  = "qcow2"
+  }
+
+  serial {
+    id   = 0
+    type = "socket"
+  }
+
+  timeouts {
+    create = "240s"
+  }
 
   depends_on = [
     proxmox_vm_qemu.kube-master

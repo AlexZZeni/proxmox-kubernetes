@@ -1,15 +1,26 @@
 resource "proxmox_lxc" "gateway" {
   for_each = var.gateways
 
-  ostemplate = var.common.os_template # comment after creation
-  ostype     = var.common.os_type
-  cores      = each.value.cores
-  hostname   = each.key
-  vmid       = each.value.id
-  memory     = each.value.memory
+  ostemplate   = var.common.os_template
+  ostype       = var.common.os_type
+  cores        = each.value.cores
+  hostname     = each.key
+  vmid         = each.value.id
+  memory       = each.value.memory
+  swap         = 2048
+  onboot       = true
+  start        = true
+  unprivileged = true
+  target_node  = each.value.target_node
+  password     = yamldecode(data.local_file.secrets.content).root_password
+  searchdomain = var.common.search_domain
+  ssh_public_keys = join("", [
+    data.tls_public_key.dy2k.public_key_openssh,
+    data.tls_public_key.ubuntu_terraform.public_key_openssh
+  ])
+
   dynamic "network" {
     for_each = each.value.network
-
     content {
       name     = network.value.name
       bridge   = "vmbr0"
@@ -18,24 +29,16 @@ resource "proxmox_lxc" "gateway" {
       hwaddr   = network.value.hwaddr
       ip       = network.value.cidr
       rate     = 0
-      tag      = 0
+      tag      = network.value.tag
       type     = "veth"
     }
   }
-  swap     = 2048
-  onboot   = true
-  password = yamldecode(data.local_file.secrets.content).root_password # comment after creation
-  rootfs   = "local:${each.value.disk},size=${each.value.disk}G"       # comment after creation
-  # rootfs       = "local:${each.value.id}/vm-${each.value.id}-disk-0.raw,size=${each.value.disk}G" # un-comment after creation
-  searchdomain = var.common.search_domain
-  ssh_public_keys = join("", [                              # comment after creation
-    data.tls_public_key.dy2k.public_key_openssh,            # comment after creation
-    data.tls_public_key.ubuntu_terraform.public_key_openssh # comment after creation
-  ])                                                        # comment after creation
-  start = true                                              # comment after creation
-  # start        = false # un-comment after creation
-  unprivileged = true
-  target_node  = var.common.target_node
+
+  rootfs {
+    storage = each.value.storage
+    size    = "${each.value.disk}G"
+  }
+
 
   connection {
     host                = each.value.network[0].ip
