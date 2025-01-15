@@ -7,4 +7,4 @@
   ufw:
     rule: allow
     name: Bind9
-    src: 10.0.0.0/24
+    src: "{{ nat_cidr }}"

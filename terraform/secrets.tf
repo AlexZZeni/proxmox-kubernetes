@@ -1,11 +1,12 @@
+# Terraform secrets file
 data "local_file" "secrets" {
-  filename = "./.terraform_secret.yaml"
+  filename = "./envs/.terraform_secret.yaml"
 }
 
 data "tls_public_key" "dy2k" {
-  private_key_pem = yamldecode(data.local_file.secrets.content).ssh_key
+  private_key_pem = file("./keys/kubernetes/terraform_key")
 }
 
 data "tls_public_key" "ubuntu_terraform" {
-  private_key_pem = yamldecode(data.local_file.secrets.content).terraform_key
+  private_key_pem = file("./keys/kubernetes/terraform_key")
 }

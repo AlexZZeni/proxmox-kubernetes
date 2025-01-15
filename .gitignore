@@ -51,3 +51,6 @@ pip-selfcheck.json
 # Anisble
 *.retry
 .ansible_secret.yml
+
+# SSH keys
+keys/terraform/*

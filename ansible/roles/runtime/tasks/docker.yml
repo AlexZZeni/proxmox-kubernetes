@@ -1,4 +1,19 @@
 ---
+- name: Get architecture
+  shell:
+    cmd: dpkg --print-architecture
+  register: os_architecture
+
+- name: Get OS release
+  shell:
+    cmd: . /etc/os-release && echo "$VERSION_CODENAME"
+  register: os_release
+
+- name: Get OS Type
+  shell:
+    cmd: . /etc/os-release && echo "$ID"
+  register: os_type
+
 - name: Uninstall Docker old versions
   apt:
     name:
@@ -22,11 +37,11 @@
 
 - name: Add Docker official GPG key
   apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
+    url: https://download.docker.com/linux/{{ os_type.stdout }}/gpg
 
 - name: Set up Docker APT repository
   apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+    repo: deb [arch={{ os_architecture.stdout }}] https://download.docker.com/linux/{{ os_type.stdout }} {{ os_release.stdout }} stable
 
 - name: Install Docker engine
   apt:

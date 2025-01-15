@@ -14,9 +14,11 @@ resource "proxmox_lxc" "gateway" {
   target_node  = each.value.target_node
   password     = yamldecode(data.local_file.secrets.content).root_password
   searchdomain = var.common.search_domain
+  tags         = var.common.tags
   ssh_public_keys = join("", [
     data.tls_public_key.dy2k.public_key_openssh,
-    data.tls_public_key.ubuntu_terraform.public_key_openssh
+    data.tls_public_key.ubuntu_terraform.public_key_openssh,
+    yamldecode(data.local_file.secrets.content).ssh_authorized_keys
   ])
 
   dynamic "network" {
@@ -56,7 +58,7 @@ resource "proxmox_lxc" "gateway" {
       "echo \"${data.tls_public_key.ubuntu_terraform.private_key_pem}\" > /home/terraform/.ssh/id_rsa",
       "echo \"${data.tls_public_key.ubuntu_terraform.public_key_openssh}\" > /home/terraform/.ssh/id_rsa.pub",
       "echo \"${data.tls_public_key.ubuntu_terraform.public_key_openssh}\" >> /home/terraform/.ssh/authorized_keys",
-      "echo \"${data.tls_public_key.dy2k.public_key_openssh}\" >> /home/terraform/.ssh/authorized_keys",
+      "echo \"${yamldecode(data.local_file.secrets.content).ssh_authorized_keys}\" >> /home/terraform/.ssh/authorized_keys",
       "chown terraform:terraform /home/terraform/.ssh/authorized_keys && chmod 700 /home/terraform/.ssh/authorized_keys"
     ]
   }

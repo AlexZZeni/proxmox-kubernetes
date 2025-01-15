@@ -1,6 +1,12 @@
 ---
-roles:
-  - name: ypsman.ipv6_disable
-  - name: bertvv.bind
-  - name: uoi-io.haproxy
-  - name: evrardjp.keepalived
+- src: bertvv.bind
+  version: v5.1.0
+
+- src: evrardjp.keepalived
+  version: 8.1.0
+
+- src: uoi-io.haproxy
+  version: v1.5.7
+
+- src: ypsman.ipv6_disable
+  version: master

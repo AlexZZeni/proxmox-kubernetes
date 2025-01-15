@@ -1,2 +1,2 @@
 ---
-runtime_type: docker
+runtime_type: containerd

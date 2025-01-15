@@ -1,0 +1,12 @@
+---
+- name: Copy kube config
+  shell: cat .kube/config
+  register: kube_config
+  when: inventory_hostname == groups["masters"][0]
+
+- name: Paste kube config
+  copy:
+    content: "{{ kube_config.stdout }}"
+    dest: ../kube/config
+  delegate_to: localhost # 127.0.0.1
+  run_once: true

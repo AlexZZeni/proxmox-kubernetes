@@ -1,0 +1,52 @@
+---
+- name: Download zabbix package
+  get_url:
+    url: https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu22.04_all.deb
+    dest: /home/terraform/zabbix-release_6.4-1+ubuntu22.04_all.deb
+
+- name: Install zabbix package
+  command: dpkg -i /home/terraform/zabbix-release_6.4-1+ubuntu22.04_all.deb
+
+- name: Update APT cache
+  apt:
+    update_cache: yes
+
+- name: Install zabbix-agent-2
+  apt:
+    name:
+      - zabbix-agent2 
+      - zabbix-agent2-plugin-*
+    state: present
+
+- name: Configure Zabbix
+  lineinfile:
+    path: "/etc/zabbix/zabbix_agent2.conf"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - {
+      regexp: "# SourceIP=",
+      line: "SourceIP={{ ansible_default_ipv4.address }}"
+    }
+    - {
+      regexp: "Server=127.0.0.1",
+      line: "Server={{ zabbix_endpoints_passive }}"
+    }
+    - {
+      regexp: "# ListenIP=0.0.0.0",
+      line: "ListenIP={{ ansible_default_ipv4.address }}"
+    }
+    - {
+      regexp: "ServerActive=127.0.0.1",
+      line: "ServerActive={{ zabbix_endpoints_active }}"
+    }
+    - {
+      regexp: "Hostname=Zabbix server",
+      line: "Hostname={{ ansible_hostname }}"
+    }
+
+- name: Enable and Restart Zabbix
+  service:
+    name: zabbix-agent2
+    state: "restarted"
+    enabled: true

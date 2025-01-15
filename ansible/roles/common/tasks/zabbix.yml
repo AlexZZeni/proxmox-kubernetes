@@ -1,0 +1,38 @@
+---
+- name: Install Zabbix
+  apt:
+    name: zabbix-agent
+    state: latest
+
+- name: Configure Zabbix
+  lineinfile:
+    path: "/etc/zabbix/zabbix_agentd.conf"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - {
+      regexp: "# SourceIP=",
+      line: "SourceIP={{ ansible_default_ipv4.address }}"
+    }
+    - {
+      regexp: "Server=127.0.0.1",
+      line: "Server={{ zabbix_endpoints_passive }}"
+    }
+    - {
+      regexp: "# ListenIP=0.0.0.0",
+      line: "ListenIP={{ ansible_default_ipv4.address }}"
+    }
+    - {
+      regexp: "ServerActive=127.0.0.1",
+      line: "ServerActive={{ zabbix_endpoints_active }}"
+    }
+    - {
+      regexp: "Hostname=Zabbix server",
+      line: "Hostname={{ ansible_hostname }}"
+    }
+
+- name: Enable and Restart Zabbix
+  service:
+    name: zabbix-agent
+    state: "restarted"
+    enabled: true

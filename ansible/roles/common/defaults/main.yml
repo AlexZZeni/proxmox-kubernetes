@@ -1,0 +1,4 @@
+---
+zabbix_agent_type: zabbix2
+zabbix_endpoints_passive: "zabbix-server"
+zabbix_endpoints_active: "zabbix-server:10051"

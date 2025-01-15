@@ -9,10 +9,11 @@
   apt:
     name: qemu-guest-agent
     state: latest
+  when: '"gateways" not in group_names'
 
 - name: Set timezone
   timezone:
-    name: Asia/Hong_Kong
+    name: America/Sao_Paulo
 
 - name: Disable SSH IPv6
   lineinfile:
@@ -84,6 +85,19 @@
   when: '"gateways" not in group_names'
   notify:
     - Reload sysctl
+
+- name: Set IPv4 Forward
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: "#net.ipv4.ip_forward=1"
+    line: "net.ipv4.ip_forward=1"
+  when: '"gateways" not in group_names'
+  notify:
+    - Reload sysctl
+
+- name: Install Zabbix
+  include_tasks: "{{ zabbix_agent_type }}.yml"
+  when: zabbix_agent_type is defined
 
 - name: Flush handlers
   meta: flush_handlers

@@ -13,6 +13,8 @@ bind_listen_ipv4:
   - 127.0.0.1
   - 10.0.0.1
 bind_recursion: true
+bind_dnssec_enable: false
+bind_dnssec_validation: false
 bind_zone_domains:
   - name: sd-51798.dy2k.io
     networks:

@@ -16,10 +16,16 @@ resource "proxmox_vm_qemu" "kube-master" {
   cipassword   = yamldecode(data.local_file.secrets.content).user_password
   searchdomain = var.common.search_domain
   nameserver   = var.common.nameserver
-  clone = var.common.clone
+  tags         = var.common.tags
+  clone = join("", [
+    each.value.target_node,
+    "-",
+    var.common.clone
+  ])
   sshkeys = join("", [
     data.tls_public_key.dy2k.public_key_openssh,
-    data.tls_public_key.ubuntu_terraform.public_key_openssh
+    data.tls_public_key.ubuntu_terraform.public_key_openssh,
+    yamldecode(data.local_file.secrets.content).ssh_authorized_keys
   ])
 
   vga {
@@ -34,11 +40,21 @@ resource "proxmox_vm_qemu" "kube-master" {
     tag      = each.value.tag
   }
 
-  disk {
-    type    = "scsi"
-    storage = each.value.storage
-    size    = each.value.disk
-    format  = "qcow2"
+  disks {
+    scsi {
+      scsi0 {
+        disk {
+          storage = each.value.storage
+          size    = each.value.disk
+          format  = "qcow2"
+        }
+      }
+      scsi1 {
+        cloudinit {
+          storage = each.value.storage
+        }
+      }
+    }
   }
 
   serial {
@@ -48,6 +64,8 @@ resource "proxmox_vm_qemu" "kube-master" {
 
   timeouts {
     create = "240s"
+    update = "2h"
+    delete = "20m"
   }
 
   depends_on = [
@@ -55,9 +73,9 @@ resource "proxmox_vm_qemu" "kube-master" {
   ]
 
   connection {
-    host                = each.value.ip
-    user                = "terraform"
-    private_key         = data.tls_public_key.ubuntu_terraform.private_key_pem
+    host        = each.value.ip
+    user        = "terraform"
+    private_key = data.tls_public_key.ubuntu_terraform.private_key_pem
     bastion_host        = var.common.bastion_host
     bastion_private_key = data.tls_public_key.dy2k.private_key_pem
   }
@@ -68,6 +86,7 @@ resource "proxmox_vm_qemu" "kube-master" {
       "ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N \"\"",
       "echo \"${data.tls_public_key.ubuntu_terraform.private_key_pem}\" > ~/.ssh/id_rsa",
       "echo \"${data.tls_public_key.ubuntu_terraform.public_key_openssh}\" > ~/.ssh/id_rsa.pub",
+      "echo \"${yamldecode(data.local_file.secrets.content).ssh_authorized_keys}\" >> /home/terraform/.ssh/authorized_keys",
     ]
   }
 }

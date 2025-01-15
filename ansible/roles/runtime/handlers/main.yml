@@ -8,3 +8,9 @@
     name: docker
     state: restarted
     daemon_reload: yes
+
+- name: Restart Containerd
+  systemd:
+    name: containerd
+    state: restarted
+    daemon_reload: yes
