@@ -1,44 +1,44 @@
 ---
 - name: Allow OpenSSH in ufw
-  ufw:
+  community.general.ufw:
     rule: allow
     name: OpenSSH
   when: inventory_hostname == groups["gateways"][0]
 
 - name: Allow Kubernetes API in ufw
-  ufw:
+  community.general.ufw:
     rule: allow
     port: "6443"
   notify:
     - Restart ufw
 
 - name: Enable UFW
-  ufw:
+  community.general.ufw:
     state: enabled
   when: inventory_hostname == groups["gateways"][0]
 
 - name: Change forward policy
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/default/ufw
-    regexp: '^DEFAULT_FORWARD_POLICY="DROP"'
-    line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
-    backrefs: yes
+    regexp: ^DEFAULT_FORWARD_POLICY="DROP"
+    line: DEFAULT_FORWARD_POLICY="ACCEPT"
+    backrefs: true
   when: inventory_hostname == groups["gateways"][0]
   notify:
     - Restart ufw
 
 - name: Set sysctl to forward
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/ufw/sysctl.conf
     regexp: "^#net/ipv4/ip_forward=1"
     line: "net/ipv4/ip_forward=1"
-    backrefs: yes
+    backrefs: true
   when: inventory_hostname == groups["gateways"][0]
   notify:
     - Restart ufw
 
 - name: Add NAT and port forwarding to ufw
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/ufw/before.rules
     block: |
       # NAT table rules
@@ -57,4 +57,4 @@
     - Restart ufw
 
 - name: Flush handlers
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers

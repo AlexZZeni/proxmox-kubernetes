@@ -1,6 +1,6 @@
 ---
 - name: Configure Kubernetes
-  include_tasks: kubeadm.yml
+  ansible.builtin.include_tasks: kubeadm.yml
 
 # - name: Final Configurations
 #   include_tasks: post.yml

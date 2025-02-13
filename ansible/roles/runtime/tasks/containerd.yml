@@ -1,21 +1,21 @@
 ---
 - name: Get architecture
-  shell:
+  ansible.builtin.command:
     cmd: dpkg --print-architecture
   register: os_architecture
 
 - name: Get OS release
-  shell:
+  ansible.builtin.shell:
     cmd: . /etc/os-release && echo "$VERSION_CODENAME"
   register: os_release
 
 - name: Get OS Type
-  shell:
+  ansible.builtin.shell:
     cmd: . /etc/os-release && echo "$ID"
   register: os_type
 
 - name: Uninstall Docker old versions
-  apt:
+  ansible.builtin.apt:
     name:
       - docker
       - docker-engine
@@ -27,7 +27,7 @@
     - Refresh APT cache
 
 - name: Install Containerd dependencies
-  apt:
+  ansible.builtin.apt:
     name:
       - apt-transport-https
       - ca-certificates
@@ -37,36 +37,43 @@
       - software-properties-common
 
 - name: Install keyrings
-  command: install -m 0755 -d /etc/apt/keyrings
+  ansible.builtin.command: install -m 0755 -d /etc/apt/keyrings
 
 - name: Check if the repository list exists
-  stat:
+  ansible.builtin.stat:
     path: /etc/apt/sources.list.d/containerd.list.list
   register: repo_stat
 
 - name: Add Docker official GPG key
-  shell: 
-    cmd: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
   when: not repo_stat.stat.exists
 
 - name: Set up Docker APT repository
-  apt_repository:
-    repo: deb [arch={{ os_architecture.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ os_type.stdout }} {{ os_release.stdout }} stable
+  ansible.builtin.apt_repository:
+    repo: >
+      deb [arch={{ os_architecture.stdout }} signed-by=/etc/apt/keyrings/docker.gpg]
+      https://download.docker.com/linux/{{ os_type.stdout }} {{ os_release.stdout }} stable
     filename: containerd.list
   when: not repo_stat.stat.exists
 
 - name: Install Containerd engine
-  apt:
+  ansible.builtin.apt:
     name:
       - containerd.io
 
 - name: Create modules file for containerd
-  file:
+  ansible.builtin.file:
     path: /etc/modules-load.d/containerd.conf
     state: touch
+    owner: root
+    group: root
+    mode: "0644" # Read/write for owner, read-only for others
 
 - name: Load the necessary modules for Containerd 1
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/modules-load.d/containerd.conf
     line: "{{ item }}"
   with_items:
@@ -74,60 +81,63 @@
     - br_netfilter
 
 - name: Load the necessary modules for Containerd 2
-  shell:
-    cmd: "modprobe {{ item }}"
+  ansible.builtin.command:
+    cmd: modprobe {{ item }}
   with_items:
     - overlay
     - br_netfilter
 
 - name: Create containerd directory
-  file:
+  ansible.builtin.file:
     path: /etc/containerd
     state: directory
+    owner: root
+    group: root
+    mode: "0644" # Read/write for owner, read-only for others
 
 - name: Generate containerd configuration
-  shell:
+  ansible.builtin.command:
     cmd: containerd config default
   register: containerd_config
 
 - name: Delete old containerd configuration
-  file:
+  ansible.builtin.file:
     path: /etc/containerd/config.toml
     state: absent
 
 - name: Create containerd configuration file
-  file:
+  ansible.builtin.file:
     path: /etc/containerd/config.toml
     state: touch
+    owner: root
+    group: root
+    mode: "0644" # Read/write for owner, read-only for others
 
 - name: Paste generated containerd configuration into file
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/containerd/config.toml
     line: "{{ containerd_config.stdout }}"
 
 - name: DEBUG generated containerd configuration
-  debug:
+  ansible.builtin.debug:
     msg: "{{ containerd_config.stdout }}"
   when: debug
 
 - name: Replace sandbox_image with the correct version in containerd configuration
-  replace:
-    path: /etc/containerd/config.toml  
+  ansible.builtin.replace:
+    path: /etc/containerd/config.toml
     regexp: '    sandbox_image = "registry.k8s.io/pause:3.8"'
     replace: '    sandbox_image = "registry.k8s.io/pause:3.10"'
   notify:
     - Restart Containerd
 
 - name: Change SystemdCgroup configuration in containerd
-  replace:
-    path: /etc/containerd/config.toml  
-    regexp: '            SystemdCgroup = false'
-    replace: '            SystemdCgroup = true'
+  ansible.builtin.replace:
+    path: /etc/containerd/config.toml
+    regexp: "            SystemdCgroup = false"
+    replace: "            SystemdCgroup = true"
   notify:
     - Restart Containerd
 
 - name: Flush handlers
-  meta: flush_handlers
-
-# https://thenewstack.io/how-to-deploy-kubernetes-with-kubeadm-and-containerd/
-# https://averagelinuxuser.com/kubernetes_containerd/
+  ansible.builtin.meta: flush_handlers

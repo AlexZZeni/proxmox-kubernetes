@@ -1,5 +1,6 @@
 ---
-- hosts: gateways
+- name: Gateway specific roles
+  hosts: gateways
   roles:
     - role: gateway
       tags:
@@ -11,13 +12,15 @@
       tags:
         - loadbalancer
 
-- hosts: all
+- name: Common roles for all machines
+  hosts: all
   roles:
     - role: common
       tags:
         - common
 
-- hosts:
+- name: Kubernetes masters and workers roles
+  hosts:
     - masters
     - workers
   roles:

@@ -1,10 +1,10 @@
 ---
 - name: Set up Bind servers
-  include_role:
+  ansible.builtin.include_role:
     name: bertvv.bind
 
 - name: Allow Bind in ufw
-  ufw:
+  community.general.ufw:
     rule: allow
     name: Bind9
     src: "{{ nat_cidr }}"

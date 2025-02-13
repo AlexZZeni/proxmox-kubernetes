@@ -1,50 +1,50 @@
 ---
 - name: Perform system upgrade
-  apt:
-    update_cache: yes
-    upgrade: yes
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: true
   register: system_upgrade
 
 - name: Install QEMU Guest Agent
-  apt:
+  ansible.builtin.apt:
     name: qemu-guest-agent
     state: latest
   when: '"gateways" not in group_names'
 
 - name: Set timezone
-  timezone:
+  community.general.timezone:
     name: America/Sao_Paulo
 
 - name: Disable SSH IPv6
-  lineinfile:
-      path: /etc/ssh/sshd_config
-      regexp: "^#ListenAddress 0.0.0.0"
-      line: "ListenAddress 0.0.0.0"
-      backrefs: yes
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: ^#ListenAddress 0.0.0.0
+    line: ListenAddress 0.0.0.0
+    backrefs: true
   notify:
     - Restart ssh
 
 - name: Disable SSH password auth
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
-    regexp: "^#PasswordAuthentication yes"
-    line: "PasswordAuthentication no"
-    backrefs: yes
+    regexp: ^#PasswordAuthentication yes
+    line: PasswordAuthentication no
+    backrefs: true
   notify:
     - Restart ssh
 
 - name: Disable IPv6
-  include_role:
+  ansible.builtin.include_role:
     name: ypsman.ipv6_disable
   register: ipv6_disable
 
 - name: Check if Postfix config exists
-  stat:
+  ansible.builtin.stat:
     path: /etc/postfix/main.cf
   register: postfix_config
 
 - name: Disable Postfix IPv6
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/postfix/main.cf
     line: inet_protocols = ipv4
   notify:
@@ -52,56 +52,62 @@
   when: postfix_config.stat.exists
 
 - name: Check swap summary
-  command: "swapon -s || true"
+  ansible.builtin.command: swapon -s || true
   register: swap_summary
-  changed_when: False
+  changed_when: false
 
 - name: Disable swap
-  command: "swapoff -a"
+  ansible.builtin.command: swapoff -a
   when: swap_summary.stdout != "" and "gateways" not in group_names
 
 - name: Remove swap file
-  replace:
+  ansible.builtin.replace:
     path: /etc/fstab
-    regex: "^([^#].*?\\sswap\\s+sw\\s+.*)$"
-    replace: '# \1'
+    regexp: ^([^#].*?\sswap\s+sw\s+.*)$
+    replace: "# \\1"
   register: swap_remove
   when: swap_summary.stdout != "" and "gateways" not in group_names
 
 - name: Check if br_netfilter module loaded
-  shell: lsmod | grep br_netfilter | wc -l || true
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      lsmod | grep br_netfilter | wc -l || true
+    executable: /bin/bash
   register: lsmod_br_netfilter
-  changed_when: False
+  changed_when: false
   when: '"gateways" not in group_names'
 
 - name: Load br_netfilter module explicitly
-  command: modprobe br_netfilter
+  ansible.builtin.command: modprobe br_netfilter
   when: lsmod_br_netfilter|int > 0 and "gateways" not in group_names
 
 - name: Enable bridged traffic in iptables
-  template:
+  ansible.builtin.template:
     src: 10-iptables-bridged.conf.j2
     dest: /etc/sysctl.d/10-iptables-bridged.conf
+    owner: root
+    group: root
+    mode: "0644" # Read/write for owner, read-only for others
   when: '"gateways" not in group_names'
   notify:
     - Reload sysctl
 
 - name: Set IPv4 Forward
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sysctl.conf
     regexp: "#net.ipv4.ip_forward=1"
-    line: "net.ipv4.ip_forward=1"
+    line: net.ipv4.ip_forward=1
   when: '"gateways" not in group_names'
   notify:
     - Reload sysctl
 
 - name: Install Zabbix
-  include_tasks: "{{ zabbix_agent_type }}.yml"
+  ansible.builtin.include_tasks: "{{ zabbix_agent_type }}.yml"
   when: zabbix_agent_type is defined
 
 - name: Flush handlers
-  meta: flush_handlers
-
+  ansible.builtin.meta: flush_handlers
 - name: Reboot server
-  reboot:
+  ansible.builtin.reboot:
   when: (ipv6_disable.changed or swap_remove.changed or system_upgrade.changed) and "gateways" not in group_names

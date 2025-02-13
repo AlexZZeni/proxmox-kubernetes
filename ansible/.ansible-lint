@@ -1,0 +1,5 @@
+---
+skip_list:
+  - var-naming[no-role-prefix]
+  - package-latest
+  - no-changed-when

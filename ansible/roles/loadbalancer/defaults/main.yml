@@ -19,7 +19,7 @@ haproxy_frontend:
   - kube_apiserver_frontend:
       mode: tcp
       binds:
-        - '{{ loadbalancer_haproxy_address }}:{{ loadbalancer_haproxy_port }}'
+        - "{{ loadbalancer_haproxy_address }}:{{ loadbalancer_haproxy_port }}"
       options:
         - tcplog
       default_backend: kube_apiserver_backend
@@ -48,7 +48,7 @@ keepalived_instances:
     virtual_router_id: 1
     priority: 100
     authentication_password: "{{ loadbalancer_keepalived_password }}"
-#     track_scripts:
-#       - haproxy_check_script
+    #     track_scripts:
+    #       - haproxy_check_script
     vips:
       - 10.0.0.10

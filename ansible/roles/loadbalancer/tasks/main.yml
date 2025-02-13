@@ -1,20 +1,20 @@
 ---
 - name: Set up haproxy
-  include_role:
+  ansible.builtin.include_role:
     name: uoi-io.haproxy
 
 - name: Set up keepalived
-  include_role:
+  ansible.builtin.include_role:
     name: evrardjp.keepalived
 
 - name: Allow load balancer port in ufw
-  ufw:
+  community.general.ufw:
     rule: allow
     port: "{{ loadbalancer_haproxy_port }}"
     src: "{{ nat_cidr }}"
 
 - name: Allow HAproxy stats port in ufw
-  ufw:
+  community.general.ufw:
     rule: allow
     port: "8404"
     src: "{{ nat_cidr }}"

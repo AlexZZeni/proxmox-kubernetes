@@ -1,14 +1,14 @@
 ---
 - name: Restart ssh
-  service:
+  ansible.builtin.service:
     name: ssh
     state: restarted
-    enabled: yes
+    enabled: true
 
 - name: Restart postfix
-  service:
+  ansible.builtin.service:
     name: postfix
     state: restarted
 
 - name: Reload sysctl
-  command: sysctl --system
+  ansible.builtin.command: sysctl --system

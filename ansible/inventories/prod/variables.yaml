@@ -1,3 +1,4 @@
+---
 ## ROLE GATEWAY VARS ##
 nat_cidr: 10.0.0.0/24
 nat_interface: eth1
@@ -23,7 +24,7 @@ bind_dnssec_validation: false
 bind_zone_domains:
   - name: sd-51798.dy2k.io
     networks:
-      - '10.0.0'
+      - 10.0.0
     name_servers:
       - ns1.sd-51798.dy2k.io.
       - ns2.sd-51798.dy2k.io.
@@ -74,7 +75,7 @@ haproxy_frontend:
   - kube_apiserver_frontend:
       mode: tcp
       binds:
-        - '{{ loadbalancer_haproxy_address }}:{{ loadbalancer_haproxy_port }}'
+        - "{{ loadbalancer_haproxy_address }}:{{ loadbalancer_haproxy_port }}"
       options:
         - tcplog
       default_backend: kube_apiserver_backend
@@ -103,15 +104,15 @@ keepalived_instances:
     virtual_router_id: 1
     priority: 100
     authentication_password: "{{ loadbalancer_keepalived_password }}"
-#     track_scripts:
-#       - haproxy_check_script
+    #     track_scripts:
+    #       - haproxy_check_script
     vips:
       - 10.0.0.10
 
 ## ROLE COMMON VARS ##
 zabbix_agent_type: zabbix2
-zabbix_endpoints_passive: "zabbix-server"
-zabbix_endpoints_active: "zabbix-server:10051"
+zabbix_endpoints_passive: zabbix-server
+zabbix_endpoints_active: zabbix-server:10051
 
 ## ROLE RUNTIME VARS ##
 runtime_type: containerd

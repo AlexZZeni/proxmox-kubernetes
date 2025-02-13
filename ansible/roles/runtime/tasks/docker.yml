@@ -1,21 +1,21 @@
 ---
 - name: Get architecture
-  shell:
+  ansible.builtin.command:
     cmd: dpkg --print-architecture
   register: os_architecture
 
 - name: Get OS release
-  shell:
+  ansible.builtin.shell:
     cmd: . /etc/os-release && echo "$VERSION_CODENAME"
   register: os_release
 
 - name: Get OS Type
-  shell:
+  ansible.builtin.shell:
     cmd: . /etc/os-release && echo "$ID"
   register: os_type
 
 - name: Uninstall Docker old versions
-  apt:
+  ansible.builtin.apt:
     name:
       - docker
       - docker-engine
@@ -27,7 +27,7 @@
     - Refresh APT cache
 
 - name: Install Docker dependencies
-  apt:
+  ansible.builtin.apt:
     name:
       - apt-transport-https
       - ca-certificates
@@ -36,36 +36,42 @@
       - software-properties-common
 
 - name: Add Docker official GPG key
-  apt_key:
+  ansible.builtin.apt_key:
     url: https://download.docker.com/linux/{{ os_type.stdout }}/gpg
 
 - name: Set up Docker APT repository
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb [arch={{ os_architecture.stdout }}] https://download.docker.com/linux/{{ os_type.stdout }} {{ os_release.stdout }} stable
 
 - name: Install Docker engine
-  apt:
+  ansible.builtin.apt:
     name:
       - docker-ce
       - docker-ce-cli
       - containerd.io
 
 - name: Check Docker systemd directory
-  stat:
-   path: /etc/systemd/system/docker.service.d
+  ansible.builtin.stat:
+    path: /etc/systemd/system/docker.service.d
   register: runtime_docker_systemd
 
 - name: Create Docker systemd directory
-  file:
+  ansible.builtin.file:
     path: /etc/systemd/system/docker.service.d
     state: directory
-  when: runtime_docker_systemd.stat.exists == false
+    mode: "0755" # Read/write for owner, read/execute for group/others
+    owner: root
+    group: root
+  when: not runtime_docker_systemd.stat.exists
 
 - name: Set up Docker daemon
-  template:
+  ansible.builtin.template:
     src: daemon.json.j2
     dest: /etc/docker/daemon.json
+    mode: "0644" # Read/write for owner, read-only for others
+    owner: root
+    group: root
   notify: Restart Docker
 
 - name: Flush handlers
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers

@@ -1,3 +1,4 @@
 ---
-- hosts: masters
-  roles:
+- name: Kubernetes Masters Roles
+  hosts: masters
+  roles: []

@@ -1,12 +1,13 @@
 ---
-- src: bertvv.bind
+roles:
+- name: bertvv.bind
   version: v5.1.0
 
-- src: evrardjp.keepalived
+- name: evrardjp.keepalived
   version: 8.1.0
 
-- src: uoi-io.haproxy
+- name: uoi-io.haproxy
   version: v1.5.7
 
-- src: ypsman.ipv6_disable
+- name: ypsman.ipv6_disable
   version: master

@@ -18,7 +18,7 @@ bind_dnssec_validation: false
 bind_zone_domains:
   - name: sd-51798.dy2k.io
     networks:
-      - '10.0.0'
+      - 10.0.0
     name_servers:
       - ns1.sd-51798.dy2k.io.
       - ns2.sd-51798.dy2k.io.
