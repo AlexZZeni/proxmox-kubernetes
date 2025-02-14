@@ -1,4 +1,0 @@
----
-- name: Kubernetes Masters Roles
-  hosts: masters
-  roles: []

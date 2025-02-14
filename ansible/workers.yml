@@ -1,4 +1,0 @@
----
-- name: Kubernetes Workers Roles
-  hosts: workers
-  roles: []

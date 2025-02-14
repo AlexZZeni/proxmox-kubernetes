@@ -2,13 +2,13 @@
 - name: Download zabbix package
   ansible.builtin.get_url:
     url: https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu22.04_all.deb
-    dest: /home/terraform/zabbix-release_6.4-1+ubuntu22.04_all.deb
+    dest: ./zabbix-release_6.4-1+ubuntu22.04_all.deb
     owner: root
     group: root
     mode: "0775" # Read/write for owner, read/execute for group/others
 
 - name: Install zabbix package
-  ansible.builtin.command: dpkg -i /home/terraform/zabbix-release_6.4-1+ubuntu22.04_all.deb
+  ansible.builtin.command: dpkg -i ./zabbix-release_6.4-1+ubuntu22.04_all.deb
 - name: Update APT cache
   ansible.builtin.apt:
     update_cache: true

@@ -1,0 +1,27 @@
+---
+roles:
+#  - name: tst.tst
+#    version: v5.1.0
+#    src: https://github.com/yourrepo/custom_role.git
+#    scm: git
+#    version: main
+
+  - name: bertvv.bind
+    version: v5.1.0
+
+  - name: evrardjp.keepalived
+    version: 8.1.0
+
+  - name: uoi-io.haproxy
+    version: v1.5.7
+
+  - name: ypsman.ipv6_disable
+    version: master
+
+collections:
+#  - name: community.general
+#    version: 10.3.1
+#    source: https://galaxy.ansible.com
+
+  - name: community.general
+    version: 10.3.1

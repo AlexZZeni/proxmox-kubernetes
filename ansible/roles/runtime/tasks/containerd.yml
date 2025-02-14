@@ -49,6 +49,7 @@
     cmd: |
       set -o pipefail
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    executable: /bin/bash
   when: not repo_stat.stat.exists
 
 - name: Set up Docker APT repository
@@ -81,8 +82,9 @@
     - br_netfilter
 
 - name: Load the necessary modules for Containerd 2
-  ansible.builtin.command:
-    cmd: modprobe {{ item }}
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
   with_items:
     - overlay
     - br_netfilter

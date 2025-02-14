@@ -1,0 +1,3 @@
+---
+kubeadm_load_balancer_dns: "k3s.local"
+kubeadm_load_balancer_port: 6443

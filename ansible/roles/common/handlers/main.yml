@@ -12,3 +12,8 @@
 
 - name: Reload sysctl
   ansible.builtin.command: sysctl --system
+
+- name: Restart System Modules Load
+  ansible.builtin.service:
+    name: systemd-modules-load
+    state: restarted

@@ -1,9 +1,0 @@
----
-- name: Import the bootstrap playbook
-  import_playbook: bootstrap.yml
-
-- name: Import Kubernetes Masters specific playbook
-  import_playbook: masters.yml
-
-- name: Import Kubernetes Workers specific playbook
-  import_playbook: workers.yml

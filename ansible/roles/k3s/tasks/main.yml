@@ -1,0 +1,55 @@
+---
+- name: Install basic packages
+  ansible.builtin.apt:
+    name:
+      - iptables
+    state: present
+
+- name: Download k3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s_install.sh
+    mode: "0700"
+
+- name: Generate k3s token
+  ansible.builtin.set_fact:
+    token: "{{ lookup('password', '/dev/null', length=32) }}"
+  when: (k3s_token is not defined) or (k3s_token | length == 0)
+  run_once: true
+
+- name: Save external token to local variable
+  ansible.builtin.set_fact:
+    token: "{{ k3s_token }}"
+  when: (k3s_token is defined) and (k3s_token | length != 0)
+
+- name: DEBUG k3s token
+  ansible.builtin.debug:
+    msg:
+      - "Token: {{ token }}"
+  when: debug
+
+- name: DEBUG Init Primary node command
+  ansible.builtin.debug:
+    msg: >
+      sh /tmp/k3s_install.sh server  --cluster-init --write-kubeconfig-mode=644  --token {{ token }}
+  when: debug and (inventory_hostname == groups["machines"][0])
+
+- name: Init the primary k3s node
+  ansible.builtin.command: >
+    sh /tmp/k3s_install.sh server --cluster-init --write-kubeconfig-mode=644
+    --token {{ token }} --server https://{{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }}
+  ignore_errors: true
+  when: inventory_hostname == groups["machines"][0]
+
+- name: DEBUG Init Other node command
+  ansible.builtin.debug:
+    msg: >
+      sh /tmp/k3s_install.sh server  --token {{ token }}
+      --server https://{{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }}
+  when: debug and (inventory_hostname != groups["machines"][0])
+
+- name: Init the other k3s node
+  ansible.builtin.command: >
+    sh /tmp/k3s_install.sh server --token {{ token }} --server https://{{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }}
+  ignore_errors: true
+  when: inventory_hostname != groups["machines"][0]

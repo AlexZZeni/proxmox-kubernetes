@@ -1,0 +1,46 @@
+---
+- name: Gateway specific roles
+  hosts: gateways
+  roles:
+    - role: gateway
+      tags:
+        - gateway
+        - stage1
+    - role: named
+      tags:
+        - named
+        - stage2
+    - role: loadbalancer
+      tags:
+        - loadbalancer
+        - stage3
+
+- name: Common roles for all machines
+  hosts: all
+  vars:
+    - debug: false
+  roles:
+    - role: common
+      tags:
+        - common
+        - stage4
+
+- name: Install and Configure the container runtime on the specified host groups
+  hosts: machines
+  vars:
+    - debug: false
+  roles:
+    - role: runtime
+      tags:
+        - runtime
+        - stage5
+
+- name: Install and Configure the kubernetes packages on the specified host groups
+  hosts: machines
+  vars:
+    - debug: false
+  roles:
+    - role: k3s
+      tags:
+        - k3s
+        - stage6

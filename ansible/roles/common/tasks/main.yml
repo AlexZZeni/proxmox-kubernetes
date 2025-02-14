@@ -5,6 +5,11 @@
     upgrade: true
   register: system_upgrade
 
+- name: Install Basic Packages
+  ansible.builtin.apt:
+    name: "{{ basic_packages }}"
+    state: present
+
 - name: Install QEMU Guest Agent
   ansible.builtin.apt:
     name: qemu-guest-agent
@@ -79,8 +84,24 @@
   when: '"gateways" not in group_names'
 
 - name: Load br_netfilter module explicitly
-  ansible.builtin.command: modprobe br_netfilter
-  when: lsmod_br_netfilter|int > 0 and "gateways" not in group_names
+  community.general.modprobe: 
+    name: br_netfilter
+    state: present
+    persistent: present
+  when: lsmod_br_netfilter|int > 0 and '"gateways" not in group_names'
+
+- name: Load addicional modules explicitly
+  community.general.modprobe: 
+    name: "{{ item }}"
+    state: absent # present
+    persistent: disabled # present
+  register: loaded_modules
+  with_items:
+    - ip_vs
+    - ip_vs_rr
+    - ip_vs_wrr
+    - ip_vs_sh
+  when: '"gateways" not in group_names'
 
 - name: Enable bridged traffic in iptables
   ansible.builtin.template:
@@ -103,11 +124,11 @@
     - Reload sysctl
 
 - name: Install Zabbix
-  ansible.builtin.include_tasks: "{{ zabbix_agent_type }}.yml"
-  when: zabbix_agent_type is defined
+  include_tasks: "{{ zabbix_agent_type }}.yml"
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
+
 - name: Reboot server
   ansible.builtin.reboot:
-  when: (ipv6_disable.changed or swap_remove.changed or system_upgrade.changed) and "gateways" not in group_names
+  when: (ipv6_disable.changed or swap_remove.changed or system_upgrade.changed or loaded_modules.changed) and "gateways" not in group_names

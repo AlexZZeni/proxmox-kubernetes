@@ -1,12 +1,11 @@
-# terraform
-.terraform_secret.yaml
-
 # Local .terraform directories
 **/.terraform/*
 
 # .tfstate files
 *.tfstate
 *.tfstate.*
+.terraform.lock.hcl
+terraform-plugin-proxmox.log
 
 # Crash log files
 crash.log
@@ -50,7 +49,10 @@ pip-selfcheck.json
 
 # Anisble
 *.retry
-.ansible_secret.yml
 
 # SSH keys
-keys/terraform/*
+terraform/keys/*
+
+# Ignore envs
+terraform/envs/*
+ansible/inventories/
