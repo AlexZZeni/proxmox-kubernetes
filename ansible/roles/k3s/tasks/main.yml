@@ -31,13 +31,26 @@
 - name: DEBUG Init Primary node command
   ansible.builtin.debug:
     msg: >
-      sh /tmp/k3s_install.sh server  --cluster-init --write-kubeconfig-mode=644  --token {{ token }}
+      sh /tmp/k3s_install.sh server --cluster-init --write-kubeconfig-mode=644
+      --token {{ token }}
+      {% if k3s_disabled_services is defined and k3s_disabled_services | length > 0 %}
+        {% for component in k3s_disabled_services %}
+      --disable {{ component }} 
+        {% endfor %}
+      {% endif %}
+      --server https://{{ k3s_load_balancer_dns }}:{{ k3s_load_balancer_port }}
   when: debug and (inventory_hostname == groups["machines"][0])
 
 - name: Init the primary k3s node
   ansible.builtin.command: >
     sh /tmp/k3s_install.sh server --cluster-init --write-kubeconfig-mode=644
-    --token {{ token }} --server https://{{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }}
+    --token {{ token }}
+    {% if k3s_disabled_services is defined and k3s_disabled_services | length > 0 %}
+      {% for component in k3s_disabled_services %}
+    --disable {{ component }} 
+      {% endfor %}
+    {% endif %}
+    --server https://{{ k3s_load_balancer_dns }}:{{ k3s_load_balancer_port }}
   ignore_errors: true
   when: inventory_hostname == groups["machines"][0]
 
@@ -45,11 +58,22 @@
   ansible.builtin.debug:
     msg: >
       sh /tmp/k3s_install.sh server  --token {{ token }}
-      --server https://{{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }}
+      {% if k3s_disabled_services is defined and k3s_disabled_services | length > 0 %}
+        {% for component in k3s_disabled_services %}
+      --disable {{ component }} 
+        {% endfor %}
+      {% endif %}
+      --server https://{{ k3s_load_balancer_dns }}:{{ k3s_load_balancer_port }}
   when: debug and (inventory_hostname != groups["machines"][0])
 
 - name: Init the other k3s node
   ansible.builtin.command: >
-    sh /tmp/k3s_install.sh server --token {{ token }} --server https://{{ kubeadm_load_balancer_dns }}:{{ kubeadm_load_balancer_port }}
+    sh /tmp/k3s_install.sh server  --token {{ token }}
+    {% if k3s_disabled_services is defined and k3s_disabled_services | length > 0 %}
+      {% for component in k3s_disabled_services %}
+    --disable {{ component }} 
+      {% endfor %}
+    {% endif %}
+    --server https://{{ k3s_load_balancer_dns }}:{{ k3s_load_balancer_port }}
   ignore_errors: true
   when: inventory_hostname != groups["machines"][0]

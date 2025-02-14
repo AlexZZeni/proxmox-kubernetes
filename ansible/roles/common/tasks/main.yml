@@ -90,18 +90,18 @@
     persistent: present
   when: lsmod_br_netfilter|int > 0 and '"gateways" not in group_names'
 
-- name: Load addicional modules explicitly
-  community.general.modprobe: 
-    name: "{{ item }}"
-    state: absent # present
-    persistent: disabled # present
-  register: loaded_modules
-  with_items:
-    - ip_vs
-    - ip_vs_rr
-    - ip_vs_wrr
-    - ip_vs_sh
-  when: '"gateways" not in group_names'
+# - name: Load addicional modules explicitly
+#   community.general.modprobe: 
+#     name: "{{ item }}"
+#     state: absent # present
+#     persistent: disabled # present
+#   register: loaded_modules
+#   with_items:
+#     - ip_vs
+#     - ip_vs_rr
+#     - ip_vs_wrr
+#     - ip_vs_sh
+#   when: '"gateways" not in group_names'
 
 - name: Enable bridged traffic in iptables
   ansible.builtin.template:
