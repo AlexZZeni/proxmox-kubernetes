@@ -33,6 +33,7 @@ resource "proxmox_vm_qemu" "kube-worker" {
   }
 
   network {
+    id       = each.value.net_id
     model    = "virtio"
     macaddr  = each.value.macaddr
     bridge   = "vmbr0"

@@ -1,6 +1,6 @@
 # Terraform secrets file
 data "local_file" "secrets" {
-  filename = "./envs/.terraform_secret.yaml"
+  filename = "./envs/${var.environment}/.terraform_secret.yaml"
 }
 
 data "tls_public_key" "dy2k" {

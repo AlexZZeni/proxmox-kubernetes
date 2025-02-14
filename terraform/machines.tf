@@ -1,5 +1,5 @@
-resource "proxmox_vm_qemu" "kube-master" {
-  for_each = var.masters
+resource "proxmox_vm_qemu" "k3s-machine" {
+  for_each = var.machines
 
   name         = each.key
   target_node  = each.value.target_node
@@ -38,7 +38,6 @@ resource "proxmox_vm_qemu" "kube-master" {
     macaddr  = each.value.macaddr
     bridge   = "vmbr0"
     firewall = true
-    tag      = each.value.tag
   }
 
   disks {
@@ -74,11 +73,11 @@ resource "proxmox_vm_qemu" "kube-master" {
   ]
 
   connection {
-    host        = each.value.ip
-    user        = "terraform"
-    private_key = data.tls_public_key.ubuntu_terraform.private_key_pem
-    bastion_host        = var.common.bastion_host
-    bastion_private_key = data.tls_public_key.dy2k.private_key_pem
+    host                = each.value.ip
+    user                = "terraform"
+    private_key         = data.tls_public_key.ubuntu_terraform.private_key_pem
+    # bastion_host        = var.common.bastion_host
+    # bastion_private_key = data.tls_public_key.dy2k.private_key_pem
   }
 
   provisioner "remote-exec" {
