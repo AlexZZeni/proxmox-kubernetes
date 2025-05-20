@@ -1,0 +1,25 @@
+---
+- name: Install Longhorn required packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - bash
+    - curl
+    - grep
+    - open-iscsi
+    - nfs-common
+    - jq
+
+- name: Configure blacklist from multipath service
+  ansible.builtin.blockinfile:
+    path: /etc/multipath.conf
+    block: |
+      blacklist {
+          devnode "^sd[a-z0-9]+"
+      }
+    create: false
+    marker: "# Allow longhorn to format volumes"
+  notify:
+    - Restart Multipathd
+

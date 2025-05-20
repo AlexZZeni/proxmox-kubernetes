@@ -19,6 +19,15 @@
       tags:
         - common
 
+- name: Kubernetes masters and workers roles (Pre required)
+  hosts:
+    - masters
+    - workers
+  roles:
+    - role: storage
+      tags:
+        - storage
+
 - name: Kubernetes masters and workers roles
   hosts:
     - masters

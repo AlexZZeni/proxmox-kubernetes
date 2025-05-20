@@ -4,35 +4,48 @@
     name:
       - apt-transport-https
       - curl
-
-- name: Install Longhorn required packages
-  ansible.builtin.apt:
-    name: "{{ item }}"
-    state: present
-  with_items:
-    - bash
-    - curl
-    - grep
-    - open-iscsi
-    - nfs-common
-    - jq
+      - ca-certificates
+      - gnupg
 
 - name: Check if the repository list exists
   ansible.builtin.stat:
-    path: /etc/apt/sources.list.d/kubernetes.list.list
+    path: /etc/apt/sources.list.d/kubernetes.list
   register: repo_stat
 
-- name: Add Kubernetes repositories 1
-  ansible.builtin.shell:
-    cmd: >
-      set -o pipefail &&
-      curl -fsSL https://pkgs.k8s.io/core:/stable:/{{ kubeadm_version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+- name: Check if the repository key exists
+  ansible.builtin.stat:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  register: key_stat
+
+- name: Ensure keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Delete old repo keys
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    state: absent
+  when: key_stat.stat.exists
+
+- name: Download Kubernetes APT key
+  ansible.builtin.get_url:
+    url: https://pkgs.k8s.io/core:/stable:/{{ kubeadm_version }}/deb/Release.key
+    dest: /tmp/kubernetes-release.key
+    mode: '0644'
   when: not repo_stat.stat.exists
 
-- name: Add Kubernetes repositories 2
+- name: Convert key to GPG format
+  ansible.builtin.command:
+    cmd: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-release.key
+  when: not repo_stat.stat.exists
+
+- name: Add Kubernetes APT repository
   ansible.builtin.apt_repository:
     repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubeadm_version }}/deb/ /
-    filename: kubernetes.list
+    filename: kubernetes
+    state: present
   when: not repo_stat.stat.exists
 
 - name: Install kubeadm executables
@@ -46,9 +59,10 @@
 - name: Check Kubernetes component statuses
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
-  ansible.builtin.shell: |
-    set -o pipefail
-    kubectl get componentstatuses 2>&1 | grep Healthy | wc -l || true
+  ansible.builtin.shell:
+    cmd: >
+      set -o pipefail
+      kubectl get componentstatuses 2>&1 | grep Healthy | wc -l || true
   register: kubeadm_components
   changed_when: false
   when: inventory_hostname == groups["masters"][0]
@@ -56,17 +70,19 @@
 - name: Check kubernetes join statuses
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
-  ansible.builtin.shell: |
-    set -o pipefail
-    kubectl get nodes -o wide | grep {{ inventory_hostname }} | tr -s ' ' | cut -d ' ' -f2 | wc -l || true
+  ansible.builtin.shell:
+    cmd: >
+      set -o pipefail
+      kubectl get nodes -o wide | grep {{ inventory_hostname }} | tr -s ' ' | cut -d ' ' -f2 | wc -l || true
   register: kubeadm_join_status
   changed_when: false
   delegate_to: '{{ groups["masters"][0] }}'
 
 - name: Register Kubernetes certificate key
-  ansible.builtin.shell: |
-    set -o pipefail
-    kubeadm certs certificate-key || true
+  ansible.builtin.shell:
+    cmd: >
+      set -o pipefail &&
+      kubeadm certs certificate-key || true
   register: kubeadm_certificate_key
   changed_when: false
   when: inventory_hostname == groups["masters"][0]
@@ -80,9 +96,10 @@
 - name: Check Kubernetes join token
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
-  ansible.builtin.shell: |
-    set -o pipefail
-    kubeadm token list | grep bootstrap | cut -d ' ' -f1 | head -n 1 || true
+  ansible.builtin.shell:
+    cmd: >
+      set -o pipefail &&
+      kubeadm token list | grep bootstrap | cut -d ' ' -f1 | head -n 1 || true
   register: kubeadm_join_token
   changed_when: false
   when: inventory_hostname == groups["masters"][0]
@@ -116,6 +133,8 @@
   ansible.builtin.command: kubeadm config images pull
   when: kubeadm_pull_images and '"masters" in group_names'
 
+# Clean Primary Node 
+# kubeadm reset --cleanup-tmp-dir --force && m -r .kube/
 - name: DEBUG init primary kubernetes node command
   ansible.builtin.debug:
     msg: >
@@ -162,9 +181,11 @@
   when: inventory_hostname == groups["masters"][0]
 
 - name: Register Kubernetes discovery token ca cert hash
-  ansible.builtin.shell: >
-    set -o pipefail &&  openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt |
-    openssl rsa -pubin -outform der 2>/dev/null |  openssl dgst -sha256 -hex | sed 's/^.* //' || true
+  ansible.builtin.shell:
+    cmd: >
+      set -o pipefail &&
+      openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt |
+      openssl rsa -pubin -outform der 2>/dev/null |  openssl dgst -sha256 -hex | sed 's/^.* //' || true
   register: kubeadm_discovery_token_ca_cert_hash
   changed_when: false
   when: inventory_hostname == groups["masters"][0]
@@ -178,9 +199,10 @@
 - name: Check Kubernetes network configurations
   environment:
     KUBECONFIG: /etc/kubernetes/admin.conf
-  ansible.builtin.shell: |
-    set -o pipefail
-    kubectl get all -n kube-system 2>&1 | grep {{ kubeadm_cni_plugins.name }} | wc -l || true
+  ansible.builtin.shell:
+    cmd: >
+      set -o pipefail
+      kubectl get all -n kube-system 2>&1 | grep {{ kubeadm_cni_plugins.name }} | wc -l || true
   register: kubeadm_network
   changed_when: false
   when: inventory_hostname == groups["masters"][0]
