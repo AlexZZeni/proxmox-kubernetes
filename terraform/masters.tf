@@ -6,7 +6,6 @@ resource "proxmox_vm_qemu" "kube-master" {
   agent        = 1
   vmid         = each.value.id
   memory       = each.value.memory
-  cores        = each.value.cores
   onboot       = true
   bootdisk     = "scsi0"
   scsihw       = "virtio-scsi-pci"
@@ -27,6 +26,11 @@ resource "proxmox_vm_qemu" "kube-master" {
     data.tls_public_key.ubuntu_terraform.public_key_openssh,
     yamldecode(data.local_file.secrets.content).ssh_authorized_keys
   ])
+
+  cpu {
+    cores    = each.value.cores
+    type     = "host"
+  }
 
   vga {
     type = "qxl"

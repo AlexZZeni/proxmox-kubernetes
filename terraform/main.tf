@@ -12,11 +12,15 @@ provider "proxmox" {
 #  pm_api_token_secret = yamldecode(data.local_file.secrets.content).pm_api_token_secret
   pm_parallel   = 1
   pm_timeout    = 3600
+  # NORMAL
   pm_debug      = false
   pm_log_enable = false
-  pm_log_file   = "terraform-plugin-proxmox.log"
-#  pm_log_levels = {
-#    _default    = "debug"
-#    _capturelog = ""
-#  }
+  # FOR DEBUG
+  # pm_debug      = true
+  # pm_log_enable = true
+  # pm_log_file   = "terraform-plugin-proxmox.log"
+  # pm_log_levels = {
+  #   _default    = "debug"
+  #   _capturelog = ""
+  # }
 }

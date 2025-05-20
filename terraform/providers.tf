@@ -2,16 +2,16 @@ terraform {
   required_providers {
     proxmox = {
       source  = "Telmate/proxmox"
-      version = "3.0.1-rc6"
+      version = "3.0.1-rc9"
     }
     tls = {
-      version = "4.0.6"
+      version = "4.1.0"
     }
     random = {
-      version = "3.6.3"
+      version = "3.7.2"
     }
     local = {
-      version = "2.5.2"
+      version = "2.5.3"
     }
   }
 }
