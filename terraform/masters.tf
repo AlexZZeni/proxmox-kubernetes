@@ -13,6 +13,7 @@ resource "proxmox_vm_qemu" "kube-master" {
   ipconfig0    = "ip=${each.value.cidr},gw=${each.value.gw}"
   ciuser       = "terraform"
   cipassword   = yamldecode(data.local_file.secrets.content).user_password
+  ciupgrade    = false
   searchdomain = var.common.search_domain
   nameserver   = var.common.nameserver
   tags         = var.common.tags
