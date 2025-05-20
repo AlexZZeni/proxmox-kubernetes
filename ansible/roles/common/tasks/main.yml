@@ -84,14 +84,14 @@
   when: '"gateways" not in group_names'
 
 - name: Load br_netfilter module explicitly
-  community.general.modprobe: 
+  community.general.modprobe:
     name: br_netfilter
     state: present
     persistent: present
   when: lsmod_br_netfilter|int > 0 and '"gateways" not in group_names'
 
 # - name: Load addicional modules explicitly
-#   community.general.modprobe: 
+#   community.general.modprobe:
 #     name: "{{ item }}"
 #     state: absent # present
 #     persistent: disabled # present
@@ -124,11 +124,12 @@
     - Reload sysctl
 
 - name: Install Zabbix
-  include_tasks: "{{ zabbix_agent_type }}.yml"
+  ansible.builtin.include_tasks: "{{ zabbix_agent_type }}.yml"
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
 
 - name: Reboot server
   ansible.builtin.reboot:
-  when: (ipv6_disable.changed or swap_remove.changed or system_upgrade.changed or loaded_modules.changed) and "gateways" not in group_names
+  when: (ipv6_disable.changed or swap_remove.changed or system_upgrade.changed) and "gateways" not in group_names
+  #(ipv6_disable.changed or swap_remove.changed or system_upgrade.changed or loaded_modules.changed) and "gateways" not in group_names

@@ -116,16 +116,17 @@ zabbix_endpoints_active: zabbix-server:10051
 
 ## ROLE RUNTIME VARS ##
 runtime_type: containerd
+debug: false
 
 ## ROLE KUBRADM VARS ##
 kubeadm_pull_images: false
-kubeadm_version: v1.31
+kubeadm_version: v1.33
 kubeadm_load_balancer_dns: kube-cluster1.sd-51798.dy2k.io
 kubeadm_load_balancer_port: 6443
 kubeadm_pod_network_cidr: 10.244.0.0/16
 kubeadm_cni_plugins:
   name: calico
   sources:
-    - url: https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/calico.yaml
+    - url: https://raw.githubusercontent.com/projectcalico/calico/v3.30.0/manifests/calico.yaml
       dest: /tmp/calico.yaml
   modifications: []
